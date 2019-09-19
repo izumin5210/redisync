@@ -21,7 +21,7 @@ func NewOnce(pool Pool, opts ...Option) *Once {
 	}
 }
 
-func (o *Once) Run(ctx context.Context, key string, f func(context.Context) error) error {
+func (o *Once) Do(ctx context.Context, key string, f func(context.Context) error) error {
 	conn, err := o.pool.GetContext(ctx)
 	if err != nil {
 		return err
