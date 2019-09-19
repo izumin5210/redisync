@@ -6,7 +6,7 @@ import (
 	"github.com/gomodule/redigo/redis"
 )
 
-func tryAcquireLock(conn redis.Conn, key string, expiration time.Duration) error {
+func TryLock(conn redis.Conn, key string, expiration time.Duration) error {
 	v, err := conn.Do("SET", key, 1, "EX", expiration.Seconds(), "NX")
 	if err != nil {
 		return err
@@ -15,4 +15,9 @@ func tryAcquireLock(conn redis.Conn, key string, expiration time.Duration) error
 		return ErrConflict
 	}
 	return nil
+}
+
+func Unlock(conn redis.Conn, key string) error {
+	_, err := conn.Do("DEL", key)
+	return err
 }

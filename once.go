@@ -28,7 +28,7 @@ func (o *Once) Run(ctx context.Context, key string, f func(context.Context) erro
 	}
 	defer conn.Close()
 
-	err = tryAcquireLock(conn, key, onceExpiration)
+	err = TryLock(conn, key, onceExpiration)
 	if err != nil {
 		return err
 	}

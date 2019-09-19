@@ -32,22 +32,17 @@ func (m *Monitor) Synchronize(ctx context.Context, key string, do func(context.C
 	defer conn.Close()
 
 	err = backoff.Retry(func() error {
-		return tryAcquireLock(conn, key, synchronizeTimeout)
+		return TryLock(conn, key, synchronizeTimeout)
 	}, m.bo)
 	if err != nil {
 		return err
 	}
 	defer func() {
-		_, dErr := conn.Do("DEL", key)
+		dErr := Unlock(conn, key)
 		if dErr != nil && err == nil {
 			err = dErr
 		}
 	}()
 
-	err = do(ctx)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return do(ctx)
 }
