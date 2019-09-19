@@ -24,7 +24,7 @@ type Monitor struct {
 	bo   backoff.BackOff
 }
 
-func (m *Monitor) Synchronize(ctx context.Context, key string, do func(context.Context) error) error {
+func (m *Monitor) Synchronize(ctx context.Context, key string, do func(context.Context) error) (err error) {
 	conn, err := m.pool.GetContext(ctx)
 	if err != nil {
 		return err
@@ -37,13 +37,14 @@ func (m *Monitor) Synchronize(ctx context.Context, key string, do func(context.C
 	if err != nil {
 		return err
 	}
+	defer func() {
+		_, dErr := conn.Do("DEL", key)
+		if dErr != nil && err == nil {
+			err = dErr
+		}
+	}()
 
 	err = do(ctx)
-	if err != nil {
-		return err
-	}
-
-	_, err = conn.Do("DEL", key)
 	if err != nil {
 		return err
 	}
