@@ -2,27 +2,16 @@ package redisync_test
 
 import (
 	"context"
-	"os"
 	"sync"
 	"testing"
 	"time"
 
 	"github.com/cenkalti/backoff/v3"
-	"github.com/gomodule/redigo/redis"
 	"github.com/izumin5210/redisync"
 )
 
 func TestMutex(t *testing.T) {
-	pool := &redis.Pool{
-		Dial: func() (redis.Conn, error) { return redis.DialURL(os.Getenv("REDIS_URL")) },
-	}
-	defer pool.Close()
-
-	defer func() {
-		conn := pool.Get()
-		defer conn.Close()
-		conn.Do("FLUSHALL")
-	}()
+	defer cleanupTestRedis()
 
 	ctx := context.Background()
 	m1 := redisync.NewMutex(pool, "mutex1")
@@ -102,16 +91,7 @@ func TestMutex(t *testing.T) {
 }
 
 func TestMutex_WithOptions(t *testing.T) {
-	pool := &redis.Pool{
-		Dial: func() (redis.Conn, error) { return redis.DialURL(os.Getenv("REDIS_URL")) },
-	}
-	defer pool.Close()
-
-	defer func() {
-		conn := pool.Get()
-		defer conn.Close()
-		conn.Do("FLUSHALL")
-	}()
+	defer cleanupTestRedis()
 
 	ctx := context.Background()
 	m := redisync.NewMutex(pool, "mutex",

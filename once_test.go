@@ -2,29 +2,15 @@ package redisync_test
 
 import (
 	"context"
-	"os"
 	"sync"
 	"sync/atomic"
 	"testing"
 
-	"github.com/gomodule/redigo/redis"
 	"github.com/izumin5210/redisync"
 )
 
 func TestOnce(t *testing.T) {
-	pool := &redis.Pool{
-		Dial:      func() (redis.Conn, error) { return redis.DialURL(os.Getenv("REDIS_URL")) },
-		MaxIdle:   100,
-		MaxActive: 100,
-		Wait:      true,
-	}
-	defer pool.Close()
-
-	defer func() {
-		conn := pool.Get()
-		defer conn.Close()
-		conn.Do("FLUSHALL")
-	}()
+	defer cleanupTestRedis()
 
 	ctx := context.Background()
 	once1 := redisync.NewOnce(pool)

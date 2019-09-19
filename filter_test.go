@@ -2,24 +2,13 @@ package redisync_test
 
 import (
 	"context"
-	"os"
 	"testing"
 
-	"github.com/gomodule/redigo/redis"
 	"github.com/izumin5210/redisync"
 )
 
 func TestScoreFilter(t *testing.T) {
-	pool := &redis.Pool{
-		Dial: func() (redis.Conn, error) { return redis.DialURL(os.Getenv("REDIS_URL")) },
-	}
-	defer pool.Close()
-
-	defer func() {
-		conn := pool.Get()
-		defer conn.Close()
-		conn.Do("FLUSHALL")
-	}()
+	defer cleanupTestRedis()
 
 	m := redisync.NewMonitor(pool)
 	filter := redisync.NewScoreFilter(pool, m)
