@@ -6,21 +6,21 @@ import (
 	"github.com/gomodule/redigo/redis"
 )
 
-func NewScoreFilter(pool Pool, m *Monitor, opts ...Option) *Filter {
-	return &Filter{
+func NewScoreFilter(pool Pool, m *Monitor, opts ...Option) *ScoreFilter {
+	return &ScoreFilter{
 		Config: createConfig(opts),
 		m:      m,
 		pool:   pool,
 	}
 }
 
-type Filter struct {
+type ScoreFilter struct {
 	Config
 	m    *Monitor
 	pool Pool
 }
 
-func (f *Filter) Filter(ctx context.Context, key string, score int) (ok bool, err error) {
+func (f *ScoreFilter) Filter(ctx context.Context, key string, score int) (ok bool, err error) {
 	err = f.m.Synchronize(ctx, key+":lock", func(ctx context.Context) (err error) {
 		ok, err = f.filter(ctx, key, score)
 		return
@@ -29,7 +29,7 @@ func (f *Filter) Filter(ctx context.Context, key string, score int) (ok bool, er
 	return
 }
 
-func (f *Filter) filter(ctx context.Context, key string, score int) (ok bool, err error) {
+func (f *ScoreFilter) filter(ctx context.Context, key string, score int) (ok bool, err error) {
 	conn, err := f.pool.GetContext(ctx)
 	if err != nil {
 		return false, err
