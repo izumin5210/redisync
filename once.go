@@ -3,21 +3,21 @@ package redisync
 import (
 	"context"
 	"errors"
-	"time"
 )
 
 type Once struct {
+	Config
 	pool Pool
 }
 
 var (
-	ErrConflict    = errors.New("this operation has been proceeded")
-	onceExpiration = 3 * 24 * time.Hour
+	ErrConflict = errors.New("this operation has been proceeded")
 )
 
-func NewOnce(pool Pool) *Once {
+func NewOnce(pool Pool, opts ...Option) *Once {
 	return &Once{
-		pool: pool,
+		Config: createConfig(opts),
+		pool:   pool,
 	}
 }
 
@@ -28,7 +28,7 @@ func (o *Once) Run(ctx context.Context, key string, f func(context.Context) erro
 	}
 	defer conn.Close()
 
-	err = TryLock(conn, key, onceExpiration)
+	err = TryLock(conn, key, o.LockExpiration)
 	if err != nil {
 		return err
 	}

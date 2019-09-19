@@ -5,9 +5,7 @@ import (
 	"os"
 	"sync"
 	"testing"
-	"time"
 
-	"github.com/cenkalti/backoff/v3"
 	"github.com/gomodule/redigo/redis"
 	"github.com/izumin5210/redisync"
 )
@@ -24,7 +22,7 @@ func TestMonitor(t *testing.T) {
 		conn.Do("FLUSHALL")
 	}()
 
-	m := redisync.NewMonitor(pool, backoff.NewConstantBackOff(1*time.Millisecond))
+	m := redisync.NewMonitor(pool)
 
 	var (
 		cnt int

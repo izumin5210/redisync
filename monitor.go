@@ -2,26 +2,20 @@ package redisync
 
 import (
 	"context"
-	"time"
 
 	"github.com/cenkalti/backoff/v3"
-	"github.com/gomodule/redigo/redis"
 )
 
-var (
-	synchronizeTimeout = 120 * time.Second
-)
-
-func NewMonitor(pool *redis.Pool, bo backoff.BackOff) *Monitor {
+func NewMonitor(pool Pool, opts ...Option) *Monitor {
 	return &Monitor{
-		pool: pool,
-		bo:   bo,
+		Config: createConfig(opts),
+		pool:   pool,
 	}
 }
 
 type Monitor struct {
+	Config
 	pool Pool
-	bo   backoff.BackOff
 }
 
 func (m *Monitor) Synchronize(ctx context.Context, key string, do func(context.Context) error) (err error) {
@@ -32,8 +26,8 @@ func (m *Monitor) Synchronize(ctx context.Context, key string, do func(context.C
 	defer conn.Close()
 
 	err = backoff.Retry(func() error {
-		return TryLock(conn, key, synchronizeTimeout)
-	}, m.bo)
+		return TryLock(conn, key, m.LockExpiration)
+	}, m.BackOffFactory.Create(ctx))
 	if err != nil {
 		return err
 	}

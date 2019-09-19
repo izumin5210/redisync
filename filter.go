@@ -6,14 +6,16 @@ import (
 	"github.com/gomodule/redigo/redis"
 )
 
-func NewScoreFilter(pool Pool, m *Monitor) *Filter {
+func NewScoreFilter(pool Pool, m *Monitor, opts ...Option) *Filter {
 	return &Filter{
-		m:    m,
-		pool: pool,
+		Config: createConfig(opts),
+		m:      m,
+		pool:   pool,
 	}
 }
 
 type Filter struct {
+	Config
 	m    *Monitor
 	pool Pool
 }

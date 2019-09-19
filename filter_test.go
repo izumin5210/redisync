@@ -4,9 +4,7 @@ import (
 	"context"
 	"os"
 	"testing"
-	"time"
 
-	"github.com/cenkalti/backoff/v3"
 	"github.com/gomodule/redigo/redis"
 	"github.com/izumin5210/redisync"
 )
@@ -23,7 +21,7 @@ func TestScoreFilter(t *testing.T) {
 		conn.Do("FLUSHALL")
 	}()
 
-	m := redisync.NewMonitor(pool, backoff.NewConstantBackOff(1*time.Millisecond))
+	m := redisync.NewMonitor(pool)
 	filter := redisync.NewScoreFilter(pool, m)
 
 	var (
