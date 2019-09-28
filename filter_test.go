@@ -12,8 +12,7 @@ import (
 func TestScoreFilter(t *testing.T) {
 	defer cleanupTestRedis()
 
-	m := redisync.NewMonitor(pool)
-	filter := redisync.NewScoreFilter(pool, m)
+	filter := redisync.NewScoreFilter(pool)
 
 	type Message struct {
 		Process int
