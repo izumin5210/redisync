@@ -14,12 +14,14 @@ var (
 		return bo
 	})
 	DefaultLockExpiration = 120 * time.Second
+	DefaultOnceExpiration = 3 * 24 * time.Second
 )
 
 func createDefaultConfig() Config {
 	return Config{
 		BackOffFactory: DefaultBackOffFactory,
 		LockExpiration: DefaultLockExpiration,
+		OnceExpiration: DefaultOnceExpiration,
 	}
 }
 
@@ -34,6 +36,7 @@ func createConfig(opts []Option) Config {
 type Config struct {
 	BackOffFactory BackOffFactory
 	LockExpiration time.Duration
+	OnceExpiration time.Duration
 }
 
 type Option func(*Config)
@@ -44,4 +47,8 @@ func WithBackOffFactory(f BackOffFactory) Option {
 
 func WithLockExpiration(d time.Duration) Option {
 	return func(c *Config) { c.LockExpiration = d }
+}
+
+func WithOnceExpiration(d time.Duration) Option {
+	return func(c *Config) { c.OnceExpiration = d }
 }

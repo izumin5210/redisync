@@ -23,7 +23,7 @@ func (o *Once) Do(ctx context.Context, key string, f func(context.Context) error
 	}
 	defer conn.Close()
 
-	_, err = TryLock(conn, key, o.LockExpiration)
+	_, err = TryLock(conn, key, o.OnceExpiration)
 	if err != nil {
 		return err
 	}
