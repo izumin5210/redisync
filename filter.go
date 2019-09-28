@@ -21,32 +21,46 @@ type ScoreFilter struct {
 }
 
 func (f *ScoreFilter) Filter(ctx context.Context, key string, score int) (ok bool, err error) {
-	err = f.m.Synchronize(ctx, key+":lock", func(ctx context.Context) (err error) {
-		ok, err = f.filter(ctx, key, score)
-		return
-	})
-
-	return
-}
-
-func (f *ScoreFilter) filter(ctx context.Context, key string, score int) (ok bool, err error) {
 	conn, err := f.pool.GetContext(ctx)
 	if err != nil {
 		return false, err
 	}
 	defer conn.Close()
 
-	got, err := redis.Int(conn.Do("GET", key))
-	if err != nil && err != redis.ErrNil {
+	defer func() {
+		if err != nil {
+			conn.Do("DISCARD")
+		}
+	}()
+
+	_, err = conn.Do("WATCH", key)
+	if err != nil {
 		return false, err
 	}
-	if err == redis.ErrNil || got < score {
-		ok = true
-		_, err = conn.Do("SET", key, score)
-		if err != nil {
-			return false, err
-		}
+
+	got, err := redis.Int(conn.Do("GET", key))
+	if (err != nil && err != redis.ErrNil) || (err == nil && got >= score) {
+		return false, err
 	}
 
-	return ok, nil
+	err = conn.Send("MULTI")
+	if err != nil {
+		return false, err
+	}
+	err = conn.Send("SET", key, score)
+	if err != nil {
+		return false, err
+	}
+	resp, err := redis.Strings(conn.Do("EXEC"))
+	if err != nil {
+		if err == redis.ErrNil {
+			return false, nil
+		}
+		return false, err
+	}
+	if len(resp) < 1 || resp[0] != "OK" {
+		return false, nil
+	}
+
+	return true, nil
 }
