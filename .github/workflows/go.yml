@@ -8,12 +8,13 @@ jobs:
     strategy:
       matrix:
         go-version: [1.12.x, 1.13.x]
-    
+        redis-version: [4.0, 5.0]
+
     services:
       redis:
-        image: redis
+        image: redis:${{ matrix.redis-version }}
         ports:
-        - 6379:6379
+        - 6379/tcp
 
     steps:
     - name: Set up Go ${{ matrix.go-version }}
@@ -33,4 +34,4 @@ jobs:
     - name: test
       run: go test -v ./...
       env:
-        REDIS_URL: redis://redis:${{ job.services.redis.ports[6379] }}
+        REDIS_URL: redis://localhost:${{ job.services.redis.ports[6379] }}
