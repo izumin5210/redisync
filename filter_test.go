@@ -4,6 +4,7 @@ import (
 	"context"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/izumin5210/redisync"
 )
@@ -14,42 +15,53 @@ func TestScoreFilter(t *testing.T) {
 	m := redisync.NewMonitor(pool)
 	filter := redisync.NewScoreFilter(pool, m)
 
-	resultCh := make(chan int)
+	type Message struct {
+		Process int
+		Score   int
+		Time    time.Time
+	}
+
+	resultCh := make(chan Message)
 
 	go func() {
 		defer close(resultCh)
 		var wg sync.WaitGroup
 		defer wg.Wait()
-		for i := 0; i < 100; i++ {
-			for j := 0; j < 4; j++ {
-				wg.Add(1)
-				i := i
-				go func() {
-					defer wg.Done()
-					ok, err := filter.Filter(context.Background(), "foo", i)
+		for i := 0; i < 4; i++ {
+			i := i
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				for j := 0; j < 100; j++ {
+					msg := Message{
+						Process: i,
+						Score:   j,
+						Time:    time.Now(),
+					}
+					time.Sleep(50 * time.Microsecond)
+					ok, err := filter.Filter(context.Background(), "foo", msg.Score)
 					if err != nil {
 						t.Errorf("returned %v, want nil", err)
 					}
 					if ok {
-						resultCh <- i
+						resultCh <- msg
 					}
-				}()
-			}
+				}
+			}()
 		}
 	}()
 
-	var msgs []int
-	for v := range resultCh {
+	var msgs []Message
+	for msg := range resultCh {
 		if len(msgs) > 0 {
-			if prev, next := msgs[len(msgs)-1], v; prev >= next {
-				t.Errorf("invalid resut: prev %v, next %v", prev, next)
+			if prev, next := msgs[len(msgs)-1], msg; !prev.Time.Before(next.Time) {
+				t.Errorf("invalid resut: prev %+v, next %+v", prev, next)
 			}
 		}
-		msgs = append(msgs, v)
+		msgs = append(msgs, msg)
 	}
 
 	if len(msgs) < 3 {
-		t.Errorf("proceeded messages too few: %v", msgs)
+		t.Errorf("proceeded messages too few: %+v", msgs)
 	}
-	t.Logf("proceeded messages: %v", msgs)
 }
