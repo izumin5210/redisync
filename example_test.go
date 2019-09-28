@@ -111,8 +111,7 @@ func ExampleScoreFilter() {
 
 	ctx := context.Background()
 
-	monitor := redisync.NewMonitor(pool)
-	filter := redisync.NewScoreFilter(pool, monitor)
+	filter := redisync.NewScoreFilter(pool)
 
 	for i := 10; i > 0; i-- {
 		i := i
