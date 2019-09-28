@@ -107,7 +107,7 @@ func TestMutex_WithOptions(t *testing.T) {
 	}
 
 	err = m.Lock(ctx)
-	if got, want := err, redisync.ErrConflict; got != want {
+	if got, want := err, redisync.ErrLocked; got != want {
 		t.Errorf("Lock returned %v, want %v", got, want)
 	}
 

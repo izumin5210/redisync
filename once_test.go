@@ -41,7 +41,7 @@ func TestOnce(t *testing.T) {
 					return nil
 				})
 				if err != nil {
-					if got, want := err, redisync.ErrConflict; got != want {
+					if got, want := err, redisync.ErrLocked; got != want {
 						t.Errorf("Run() returned unexpected error %v, want %v", got, want)
 					} else {
 						atomic.AddUint32(tc.errCnt, 1)

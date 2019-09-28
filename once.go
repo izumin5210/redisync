@@ -2,17 +2,12 @@ package redisync
 
 import (
 	"context"
-	"errors"
 )
 
 type Once struct {
 	Config
 	pool Pool
 }
-
-var (
-	ErrConflict = errors.New("this operation has been proceeded")
-)
 
 func NewOnce(pool Pool, opts ...Option) *Once {
 	return &Once{
@@ -28,7 +23,7 @@ func (o *Once) Do(ctx context.Context, key string, f func(context.Context) error
 	}
 	defer conn.Close()
 
-	err = TryLock(conn, key, o.LockExpiration)
+	_, err = TryLock(conn, key, o.LockExpiration)
 	if err != nil {
 		return err
 	}
