@@ -8,8 +8,9 @@ import (
 
 type Mutex struct {
 	Config
-	pool Pool
-	key  string
+	pool      Pool
+	key       string
+	unlockKey string
 }
 
 func NewMutex(pool Pool, key string, opts ...Option) *Mutex {
@@ -27,9 +28,16 @@ func (m *Mutex) Lock(ctx context.Context) error {
 	}
 	defer conn.Close()
 
-	return backoff.Retry(func() error {
-		return TryLock(conn, m.key, m.LockExpiration)
+	var unlock string
+
+	err = backoff.Retry(func() (err error) {
+		unlock, err = TryLock(conn, m.key, m.LockExpiration)
+		return err
 	}, m.BackOffFactory.Create(ctx))
+
+	m.unlockKey = unlock
+
+	return err
 }
 
 func (m *Mutex) Unlock(ctx context.Context) error {
@@ -39,5 +47,5 @@ func (m *Mutex) Unlock(ctx context.Context) error {
 	}
 	defer conn.Close()
 
-	return Unlock(conn, m.key)
+	return Unlock(conn, m.key, m.unlockKey)
 }

@@ -25,14 +25,17 @@ func (m *Monitor) Synchronize(ctx context.Context, key string, do func(context.C
 	}
 	defer conn.Close()
 
-	err = backoff.Retry(func() error {
-		return TryLock(conn, key, m.LockExpiration)
+	var unlock string
+
+	err = backoff.Retry(func() (err error) {
+		unlock, err = TryLock(conn, key, m.LockExpiration)
+		return err
 	}, m.BackOffFactory.Create(ctx))
 	if err != nil {
 		return err
 	}
 	defer func() {
-		dErr := Unlock(conn, key)
+		dErr := Unlock(conn, key, unlock)
 		if dErr != nil && err == nil {
 			err = dErr
 		}
