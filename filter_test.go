@@ -32,12 +32,12 @@ func TestScoreFilter(t *testing.T) {
 			go func() {
 				defer wg.Done()
 				for j := 0; j < 100; j++ {
+					time.Sleep(50 * time.Microsecond)
 					msg := Message{
 						Process: i,
 						Score:   j,
 						Time:    time.Now(),
 					}
-					time.Sleep(50 * time.Microsecond)
 					ok, err := filter.Filter(context.Background(), "foo", msg.Score)
 					if err != nil {
 						t.Errorf("returned %v, want nil", err)
