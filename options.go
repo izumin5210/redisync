@@ -21,7 +21,6 @@ func createDefaultConfig() Config {
 	return Config{
 		BackOffFactory: DefaultBackOffFactory,
 		LockExpiration: DefaultLockExpiration,
-		OnceExpiration: DefaultOnceExpiration,
 	}
 }
 
@@ -36,7 +35,6 @@ func createConfig(opts []Option) Config {
 type Config struct {
 	BackOffFactory BackOffFactory
 	LockExpiration time.Duration
-	OnceExpiration time.Duration
 }
 
 type Option func(*Config)
@@ -49,6 +47,31 @@ func WithLockExpiration(d time.Duration) Option {
 	return func(c *Config) { c.LockExpiration = d }
 }
 
-func WithOnceExpiration(d time.Duration) Option {
-	return func(c *Config) { c.OnceExpiration = d }
+func createDefaultOnceConfig() OnceConfig {
+	return OnceConfig{
+		Expiration: DefaultOnceExpiration,
+	}
+}
+
+type OnceConfig struct {
+	Expiration       time.Duration
+	UnlockAfterError bool
+}
+
+type OnceOption func(*OnceConfig)
+
+func createOnceConfig(opts []OnceOption) OnceConfig {
+	c := createDefaultOnceConfig()
+	for _, f := range opts {
+		f(&c)
+	}
+	return c
+}
+
+func WithOnceExpiration(d time.Duration) OnceOption {
+	return func(c *OnceConfig) { c.Expiration = d }
+}
+
+func WithOnceUnlockAfterError() OnceOption {
+	return func(c *OnceConfig) { c.UnlockAfterError = true }
 }

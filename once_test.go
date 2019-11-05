@@ -2,6 +2,7 @@ package redisync_test
 
 import (
 	"context"
+	"errors"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -67,5 +68,33 @@ func TestOnce(t *testing.T) {
 
 	if got, want := barErrCnt, uint32(199); got != want {
 		t.Errorf("bar skipped %d times, want %d", got, want)
+	}
+}
+
+func TestOnce_WithOnceUnlockAfterError(t *testing.T) {
+	defer cleanupTestRedis()
+
+	ctx := context.Background()
+	once := redisync.NewOnce(pool, redisync.WithOnceUnlockAfterError())
+
+	var callCnt int32
+
+	_ = once.Do(ctx, "foo", func(context.Context) error {
+		atomic.AddInt32(&callCnt, 1)
+		return errors.New("errors")
+	})
+
+	_ = once.Do(ctx, "foo", func(context.Context) error {
+		atomic.AddInt32(&callCnt, 1)
+		return nil
+	})
+
+	_ = once.Do(ctx, "foo", func(context.Context) error {
+		atomic.AddInt32(&callCnt, 1)
+		return nil
+	})
+
+	if got, want := callCnt, int32(2); got != want {
+		t.Errorf("Closure in redisync.Once is called %d times, want %d", got, want)
 	}
 }
