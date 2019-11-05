@@ -54,7 +54,8 @@ func createDefaultOnceConfig() OnceConfig {
 }
 
 type OnceConfig struct {
-	Expiration time.Duration
+	Expiration       time.Duration
+	UnlockAfterError bool
 }
 
 type OnceOption func(*OnceConfig)
@@ -69,4 +70,8 @@ func createOnceConfig(opts []OnceOption) OnceConfig {
 
 func WithOnceExpiration(d time.Duration) OnceOption {
 	return func(c *OnceConfig) { c.Expiration = d }
+}
+
+func WithOnceUnlockAfterError() OnceOption {
+	return func(c *OnceConfig) { c.UnlockAfterError = true }
 }

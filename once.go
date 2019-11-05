@@ -23,10 +23,14 @@ func (o *Once) Do(ctx context.Context, key string, f func(context.Context) error
 	}
 	defer conn.Close()
 
-	_, err = TryLock(conn, key, o.Expiration)
+	unlockValue, err := TryLock(conn, key, o.Expiration)
 	if err != nil {
 		return err
 	}
 
-	return f(ctx)
+	err = f(ctx)
+	if err != nil && o.UnlockAfterError {
+		_ = Unlock(conn, key, unlockValue)
+	}
+	return err
 }
